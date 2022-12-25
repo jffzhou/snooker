@@ -1,0 +1,2 @@
+# snooker
+Snooker with OCaml
