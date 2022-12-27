@@ -1,0 +1,4 @@
+(library
+ (name snooker)
+ (public_name Snooker)
+ (libraries raylib))
