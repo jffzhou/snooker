@@ -13,8 +13,8 @@ type color =
   | Black
   | Cue
 
-val pos : t -> Vector2d.t
-val vel : t -> Vector2d.t
+val pos : t -> Raylib.Vector2.t
+val vel : t -> Raylib.Vector2.t
 val radius : t -> float
 val color : t -> color
 

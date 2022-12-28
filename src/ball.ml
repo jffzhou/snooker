@@ -1,4 +1,4 @@
-open Vector2d
+open Raylib.Vector2
 
 type color =
   | Red
@@ -11,8 +11,8 @@ type color =
   | Cue
 
 type t = {
-  pos : Vector2d.t;
-  vel : Vector2d.t;
+  pos : Raylib.Vector2.t;
+  vel : Raylib.Vector2.t;
   radius : float;
   friction : float;
   color : color;
@@ -22,10 +22,20 @@ let color b = b.color
 let pos b = b.pos
 let radius b = b.radius
 let vel b = b.vel
-let touching b1 b2 = dist (pos b1) (pos b2) < radius b1 +. radius b2
+let touching b1 b2 = distance (pos b1) (pos b2) < radius b1 +. radius b2
 
 let tick b =
-  { b with pos = add b.pos b.vel; vel = mult b.vel b.friction }
+  {
+    b with
+    pos = add b.pos b.vel;
+    vel = multiply b.vel (create b.friction b.friction);
+  }
 
 let init (x, y) r f c =
-  { pos = vec x y; vel = zero; radius = r; friction = f; color = c }
+  {
+    pos = create x y;
+    vel = zero ();
+    radius = r;
+    friction = f;
+    color = c;
+  }

@@ -1,6 +1,6 @@
 open Snooker
 open Raylib
-open Vector2d
+open Raylib.Vector2
 
 let color_to_raylib =
   Ball.(
@@ -16,7 +16,7 @@ let color_to_raylib =
 
 let draw_ball b =
   Ball.(
-    let x, y = b |> pos |> vec_pair in
+    let x, y = b |> pos |> fun v -> (x v, y v) in
     draw_circle (int_of_float x) (int_of_float y) (radius b)
       (b |> color |> color_to_raylib))
 

@@ -1,11 +1,12 @@
-open Vector2d
+open Raylib.Vector2
 
 type t = {
-  pos : Vector2d.t;
-  vel : Vector2d.t;
+  pos : Raylib.Vector2.t;
+  vel : Raylib.Vector2.t;
+  clicked : bool;
   released : bool;
   power : float;
-  target : Vector2d.t;
+  target : Raylib.Vector2.t;
 }
 
 let pos c = c.pos
@@ -13,11 +14,12 @@ let vel c = c.pos
 
 let init (x, y) =
   {
-    pos = vec x y;
-    vel = zero;
+    pos = create x y;
+    vel = zero ();
     released = false;
+    clicked = false;
     power = 0.;
-    target = vec x y;
+    target = create x y;
   }
 
 let tick c = c

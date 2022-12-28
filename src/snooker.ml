@@ -1,6 +1,7 @@
 open Ball
-open Vector2d
+open Raylib.Vector2
 open Cue
+open Raylib
 
 type t = {
   balls : Ball.t list;
