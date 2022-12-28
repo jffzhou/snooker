@@ -1,0 +1,1 @@
+val draw : Snooker.t -> unit

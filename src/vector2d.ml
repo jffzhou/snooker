@@ -17,3 +17,5 @@ let dist v1 v2 = sub v1 v2 |> norm
 let angle v1 v2 =
   match sub v1 v2 with
   | { x; y } -> Float.atan2 y x
+
+let vec_pair v = (v.x, v.y)

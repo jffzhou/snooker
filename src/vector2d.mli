@@ -1,6 +1,9 @@
 (** type for handling vector operations*)
 
-type t
+type t = {
+  x : float;
+  y : float;
+}
 
 val add : t -> t -> t
 val mult : t -> float -> t
@@ -18,3 +21,6 @@ val angle : t -> t -> float
 
 val vec : float -> float -> t
 (** [vec x y] creates a new vector [(x, y)].*)
+
+val vec_pair : t -> float * float
+(** [vec_pair v] is [(v.x, v.y)].*)
