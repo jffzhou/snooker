@@ -27,8 +27,21 @@ let rec draw_balls b =
       draw_ball h;
       draw_balls t
 
+let draw_cue c =
+  let rect =
+    Rectangle.create
+      (Cue.target c |> x)
+      (Cue.target c |> y)
+      (Cue.length c) 10.
+  in
+  draw_rectangle_pro rect
+    (create ~-.(Cue.dist c +. ball_radius +. 5.) 5.)
+    (Cue.angle c *. 180. /. Float.pi)
+    Color.brown
+
 let draw t =
   begin_drawing ();
   clear_background Color.darkgreen;
   t |> balls |> draw_balls;
+  t |> cue |> draw_cue;
   end_drawing ()

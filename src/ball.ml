@@ -20,6 +20,7 @@ type t = {
 
 let color b = b.color
 let pos b = b.pos
+let set_vel t v = { t with vel = v }
 let radius b = b.radius
 let vel b = b.vel
 let touching b1 b2 = distance (pos b1) (pos b2) < radius b1 +. radius b2

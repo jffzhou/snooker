@@ -27,3 +27,5 @@ val tick : t -> t
 val init : float * float -> float -> float -> color -> t
 (** [init (x, y) r f c] initialises a new ball with position [p], radius
     [r], friction [f] and color string [c].*)
+
+val set_vel : t -> Raylib.Vector2.t -> t
