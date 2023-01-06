@@ -53,39 +53,51 @@ let held_distance c mouse_pos =
     in
     if d < 0. then 0. else if d > 200. then 200. else d)
 
+(** cue is being dragged back*)
+let dragging_back c mouse_pos =
+  {
+    c with
+    clicked_pos = (if c.clicked then c.clicked_pos else mouse_pos);
+    clicked = true;
+    dist = held_distance c mouse_pos;
+  }
+
+(** cue has struck cue ball*)
+let contacted c =
+  {
+    c with
+    released = false;
+    clicked = false;
+    vel = 0.;
+    dist = 0.;
+    contact = true;
+  }
+
+(** cue has just been released*)
+let released c =
+  {
+    c with
+    released = true;
+    vel = (c.dist +. 5.) /. 3.;
+    power = c.dist /. 5.;
+  }
+
+(** cue is following mouse*)
+let moving c mouse_pos target =
+  {
+    c with
+    angle = vec_angle mouse_pos c.target;
+    clicked = false;
+    power = 0.;
+    contact = false;
+    target;
+  }
+
 let tick c mouse_pos mouse_down no_movement target =
-  if mouse_down then
-    {
-      c with
-      clicked_pos = (if c.clicked then c.clicked_pos else mouse_pos);
-      clicked = true;
-      dist = held_distance c mouse_pos;
-    }
+  if mouse_down then dragging_back c mouse_pos
   else if c.clicked then
-    if c.dist < 0. then
-      {
-        c with
-        released = false;
-        clicked = false;
-        vel = 0.;
-        dist = 0.;
-        contact = true;
-      }
+    if c.dist < 0. then contacted c
     else if c.released then { c with dist = c.dist -. c.vel }
-    else
-      {
-        c with
-        released = true;
-        vel = (c.dist +. 5.) /. 3.;
-        power = c.dist /. 3.;
-      }
-  else
-    {
-      c with
-      angle =
-        (if no_movement then vec_angle mouse_pos c.target else c.angle);
-      clicked = false;
-      power = 0.;
-      contact = false;
-      target = (if no_movement then target else c.target);
-    }
+    else released c
+  else if no_movement then moving c mouse_pos target
+  else { c with contact = false }

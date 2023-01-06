@@ -1,6 +1,7 @@
 open Snooker
 open Raylib
 open Raylib.Vector2
+open LineBoundary
 
 let color_to_raylib =
   Ball.(
@@ -20,8 +21,7 @@ let draw_ball b =
     draw_circle (int_of_float x) (int_of_float y) (radius b)
       (b |> color |> color_to_raylib))
 
-let rec draw_balls b =
-  match b with
+let rec draw_balls = function
   | [] -> ()
   | h :: t ->
       draw_ball h;
@@ -39,9 +39,24 @@ let draw_cue c =
     (Cue.angle c *. 180. /. Float.pi)
     Color.brown
 
+let rec draw_lines (t : Snooker.t) = function
+  | [] -> ()
+  | h :: tail ->
+      let p1, p2 = points h in
+      let color =
+        if collision h (balls t |> List.hd) then Color.red
+        else Color.black
+      in
+      draw_line_v p1 p2 color;
+      draw_lines t tail
+
+let debug t = ()
+
 let draw t =
   begin_drawing ();
   clear_background Color.darkgreen;
   t |> balls |> draw_balls;
   t |> cue |> draw_cue;
+  t |> line_boundaries |> draw_lines t;
+  t |> debug;
   end_drawing ()
