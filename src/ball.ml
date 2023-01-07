@@ -35,8 +35,9 @@ let set_colliding colliding b = { b with colliding }
 let tick dt b =
   let f = b.accel in
   let new_v =
-    b.vel <+> (f <*> dt) <*> b.friction_c ** dt |> fun x ->
-    if length x < 1. && not b.colliding then zero () else x
+    (b.vel <+> (f <*> dt)
+    <*> if b.colliding then 1. else b.friction_c ** dt)
+    |> fun x -> if length x < 1. && not b.colliding then zero () else x
   in
   {
     b with
@@ -67,5 +68,11 @@ let resolve_collision_elastic b1 b2 =
   in
   let v1_n = one_collision v1 v2 x1 x2 in
   let v2_n = one_collision v2 v1 x2 x1 in
-  ( { b1 with vel = v1_n; colliding = true },
-    { b2 with vel = v2_n; colliding = true } )
+  let disp_vec =
+    normalize (x1 <-> x2)
+    <*> b1.radius +. b2.radius -. length (x1 <-> x2)
+  in
+  let x1_n = x1 <+> (disp_vec <*> 0.5) in
+  let x2_n = x2 <-> (disp_vec <*> 0.5) in
+  ( { b1 with vel = v1_n; pos = x1_n; colliding = true },
+    { b2 with vel = v2_n; pos = x2_n; colliding = true } )

@@ -29,7 +29,7 @@ let random_color () =
 
 let new_ball () =
   Ball.init
-    (Random.float 100. +. 350., Random.float 100. +. 200.)
+    (Random.float 300. +. 250., Random.float 300. +. 250.)
     ball_radius 0.96 (random_color ())
 
 let init_balls =
@@ -44,7 +44,7 @@ let init_balls =
       done;
       random_ball (!new_b :: b_list) (n - 1)
   in
-  random_ball [ Ball.init (400., 400.) ball_radius 0.96 Cue ] 10
+  random_ball [ Ball.init (400., 400.) ball_radius 0.96 Cue ] 50
 
 let init_line_boundaries =
   let tl, tr, bl, br =
@@ -81,7 +81,8 @@ let rec apply_boundary_ball b bl =
   match bl with
   | [] -> b
   | h :: t ->
-      if collision h b then update_vel h b else apply_boundary_ball b t
+      if collision h b then update_collision h b
+      else apply_boundary_ball b t
 
 let apply_boundary bl =
   let rec apply_boundary_rec acc = function
@@ -108,9 +109,9 @@ let all_ball_collisions lst =
 let update_balls balls line_boundaries =
   let i, rb = (ref substeps, ref balls) in
   while !i > 0 do
+    rb := List.map (Ball.tick (1. /. float_of_int substeps)) !rb;
     rb := apply_boundary line_boundaries !rb;
     rb := all_ball_collisions !rb;
-    rb := List.map (Ball.tick (1. /. float_of_int substeps)) !rb;
     i := !i - 1
   done;
   !rb

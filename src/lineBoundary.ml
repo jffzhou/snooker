@@ -37,12 +37,20 @@ let collision l b =
   let r = Ball.radius b in
   r >= line_dist b l
 
-let update_vel l b =
+let update_collision l b =
   let open Ball in
-  let v = vel b in
+  let v, d, p = (vel b, radius b -. line_dist b l, pos b) in
   match l with
   | { line_type; p1; p2 } -> (
       match line_type with
-      | Vertical -> b |> set_vel (reflect_y v) |> set_colliding true
-      | Horizontal -> b |> set_vel (reflect_x v) |> set_colliding true
+      | Vertical ->
+          b
+          |> set_vel (reflect_y v)
+          |> set_colliding true
+          |> set_pos (p <+> create (if x p > x p1 then d else ~-.d) 0.)
+      | Horizontal ->
+          b
+          |> set_vel (reflect_x v)
+          |> set_colliding true
+          |> set_pos (p <+> create 0. (if y p > y p1 then d else ~-.d))
       | General -> b (*TODO*))
