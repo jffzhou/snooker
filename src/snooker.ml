@@ -4,6 +4,8 @@ open Cue
 open Raylib
 open LineBoundary
 
+let substeps = 16
+
 type t = {
   balls : Ball.t list;
   cue : Cue.t;
@@ -13,7 +15,7 @@ type t = {
 let ball_radius = 10.
 let cueball t = List.filter (fun x -> color x = Cue) t.balls |> List.hd
 let cueball_pos t = cueball t |> pos
-let init_balls = [ Ball.init (400., 400.) ball_radius 0.93 Cue ]
+let init_balls = [ Ball.init (400., 400.) ball_radius 0.97 Cue ]
 
 let init_line_boundaries =
   let tl, tr, bl, br =
@@ -35,10 +37,13 @@ let balls t = t.balls
 let cue t = t.cue
 let line_boundaries t = t.line_boundaries
 
-let hit_cueball b c =
+let hit_cueball b c dt =
   let a = Float.pi +. angle c in
   let v =
-    Float.(create ((a |> cos) *. power c) ((a |> sin) *. power c))
+    Float.(
+      create
+        ((a |> cos) *. power c /. dt)
+        ((a |> sin) *. (power c /. dt)))
   in
   List.map (fun x -> if color x = Cue then set_accel x v else x) b
 
@@ -47,10 +52,7 @@ let rec apply_boundary_ball b bl =
   match bl with
   | [] -> b
   | h :: t ->
-      if collision h b then (
-        Printf.printf "collided%!";
-        set_touching h b)
-      else apply_boundary_ball b t
+      if collision h b then update_vel h b else apply_boundary_ball b t
 
 let apply_boundary bl =
   let rec apply_boundary_rec acc = function
@@ -58,6 +60,15 @@ let apply_boundary bl =
     | h :: t -> apply_boundary_rec (apply_boundary_ball h bl :: acc) t
   in
   apply_boundary_rec []
+
+let update_balls balls line_boundaries =
+  let i, rb = (ref substeps, ref balls) in
+  while !i > 0 do
+    rb := apply_boundary line_boundaries !rb;
+    rb := List.map (Ball.tick (1. /. float_of_int substeps)) !rb;
+    i := !i - 1
+  done;
+  !rb
 
 let tick t =
   let cue =
@@ -67,8 +78,11 @@ let tick t =
       (cueball_pos t)
   in
   let t =
-    if Cue.contact cue then { t with balls = hit_cueball t.balls t.cue }
+    if Cue.contact cue then
+      {
+        t with
+        balls = hit_cueball t.balls t.cue (1. /. float_of_int substeps);
+      }
     else t
   in
-  let collided_balls = apply_boundary t.line_boundaries t.balls in
-  { t with balls = List.map (Ball.tick 1.) collided_balls; cue }
+  { t with balls = update_balls t.balls t.line_boundaries; cue }

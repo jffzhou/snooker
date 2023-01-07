@@ -43,11 +43,7 @@ let rec draw_lines (t : Snooker.t) = function
   | [] -> ()
   | h :: tail ->
       let p1, p2 = points h in
-      let color =
-        if collision h (balls t |> List.hd) then Color.red
-        else Color.black
-      in
-      draw_line_v p1 p2 color;
+      draw_line_v p1 p2 Color.black;
       draw_lines t tail
 
 let debug t = ()

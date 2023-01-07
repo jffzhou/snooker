@@ -13,66 +13,52 @@ type color =
 
 type t = {
   pos : Raylib.Vector2.t;
-  last_pos : Raylib.Vector2.t;
-  disp : Raylib.Vector2.t;
+  vel : Raylib.Vector2.t;
   accel : Raylib.Vector2.t;
   radius : float;
   friction_c : float;
-  friction_vec : Raylib.Vector2.t;
   color : color;
 }
 
-let substeps = 2
 let color b = b.color
 let pos b = b.pos
-let vel b dt = b.pos <-> b.last_pos <*> 1. /. dt
+let vel b = b.vel
 let radius b = b.radius
 let touching b1 b2 = distance (pos b1) (pos b2) < radius b1 +. radius b2
-let moving b = vec_pair b.disp = (0., 0.) && vec_pair b.accel = (0., 0.)
+let moving b = b.vel <=> zero ()
 let set_accel b accel = { b with accel }
 let set_pos b pos = { b with pos }
-
-(** calculates displacement*)
-let update_disp b =
-  let d = subtract b.pos b.last_pos in
-  if length d > 0.1 then { b with disp = d }
-  else { b with disp = zero () }
-
-(** sets friction*)
-let friction b =
-  if vec_equal b.disp (zero ()) then zero ()
-  else normalize b.disp <*> ~-.(b.friction_c)
-
-let update b dt =
-  let f = b.accel in
-  let b = b |> update_disp in
-  let new_pos = b.disp <+> (f <*> dt ** 2.) <+> b.pos in
-  if distance b.last_pos new_pos > distance b.last_pos b.pos then
-    {
-      b with
-      pos = new_pos;
-      last_pos = b.pos;
-      friction_vec = friction b;
-    }
-  else { b with pos = b.last_pos; friction_vec = zero () }
+let set_vel b vel = { b with vel }
 
 let tick dt b =
-  let n = substeps in
-  let i, rb = (ref n, ref b) in
-  while !i > 0 do
-    rb := update !rb (dt /. float_of_int n);
-    i := !i - 1
-  done;
-  set_accel !rb (zero ())
+  let f = b.accel in
+  let new_v =
+    b.vel <+> (f <*> dt) <*> b.friction_c ** dt
+    |> vec_map (fun x -> if Float.abs x < 0.05 then 0. else x)
+  in
+  {
+    b with
+    vel = new_v;
+    pos = b.pos <+> (new_v <*> dt);
+    accel = zero ();
+  }
 
 let init (x, y) r f c =
   {
     pos = create x y;
-    last_pos = create x y;
+    vel = zero ();
     accel = zero ();
-    disp = zero ();
     radius = r;
     friction_c = f;
-    friction_vec = zero ();
     color = c;
   }
+
+let resolve_collision_elastic b1 b2 =
+  let x1, x2, v1, v2 = (b1.pos, b2.pos, b1.vel, b2.vel) in
+  let one_collision v1 v2 x1 x2 =
+    v1 <-> (x1 <-> x2)
+    <*> dot_product (v1 <-> v2) (x1 <-> x2) /. length_sqr (x1 <-> x2)
+  in
+  let v1_n = one_collision x1 x2 v1 v2 in
+  let v2_n = one_collision v2 v1 x2 x1 in
+  ({ b1 with vel = v1_n }, { b2 with vel = v2_n })

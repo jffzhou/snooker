@@ -17,7 +17,7 @@ val pos : t -> Raylib.Vector2.t
 val radius : t -> float
 val color : t -> color
 val moving : t -> bool
-val vel : t -> float -> Raylib.Vector2.t
+val vel : t -> Raylib.Vector2.t
 
 val touching : t -> t -> bool
 (** [touching b1 b2] is [true] if [b1] and [b2] are touching and [false]
@@ -31,3 +31,5 @@ val init : float * float -> float -> float -> color -> t
 
 val set_accel : t -> Raylib.Vector2.t -> t
 val set_pos : t -> Raylib.Vector2.t -> t
+val set_vel : t -> Raylib.Vector2.t -> t
+val resolve_collision_elastic : t -> t -> t * t

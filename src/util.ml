@@ -3,7 +3,7 @@ open Raylib.Vector2
 
 let multiply_scalar v1 s = multiply v1 (create s s)
 let vec_pair v = (x v, y v)
-let vec_equal v1 v2 = x v1 = x v2 && y v1 = y v2
+let ( <=> ) v1 v2 = x v1 = x v2 && y v1 = y v2
 let vec_map f v1 = create (v1 |> x |> f) (v1 |> y |> f)
 let ( <+> ) v1 v2 = add v1 v2
 let ( <*> ) v1 s = multiply_scalar v1 s

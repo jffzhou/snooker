@@ -37,23 +37,12 @@ let collision l b =
   let r = Ball.radius b in
   r >= line_dist b l
 
-let set_touching l b =
-  Printf.printf "collided%!";
+let update_vel l b =
   let open Ball in
-  let r, d, v, p = (radius b, line_dist b l, vel b 1., pos b) in
-  let disp =
-    match l with
-    | { line_type; p1; p2 } -> (
-        match line_type with
-        | Vertical ->
-            if dot_product v (create 1. 0.) < 0. then create (r -. d) 0.
-            else create (d -. r) 0.
-        | Horizontal ->
-            if dot_product v (create 0. 1.) < 0. then create 0. (r -. d)
-            else create 0. (d -. r)
-        | General -> normalize v <*> d -. r)
-  in
-  Printf.printf "r = %f, d = %f, v = (%f, %f)%!, disp = (%f, %f)%!\n" r
-    d (x v) (y v) (x disp) (y disp);
-  set_pos b (p <+> disp)
-(* set_pos b (p <+> (normalize v <*> d -. r)) *)
+  let v = vel b in
+  match l with
+  | { line_type; p1; p2 } -> (
+      match line_type with
+      | Vertical -> set_vel b (reflect_y v)
+      | Horizontal -> set_vel b (reflect_x v)
+      | General -> b (*TODO*))

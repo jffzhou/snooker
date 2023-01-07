@@ -5,7 +5,7 @@ val ( <*> ) : Vector2.t -> float -> Vector2.t
 val ( <+> ) : Vector2.t -> Vector2.t -> Vector2.t
 val ( <-> ) : Vector2.t -> Vector2.t -> Vector2.t
 val vec_pair : Vector2.t -> float * float
-val vec_equal : Vector2.t -> Vector2.t -> bool
+val ( <=> ) : Vector2.t -> Vector2.t -> bool
 val vec_map : (float -> float) -> Vector2.t -> Vector2.t
 
 val point_line_dist : Vector2.t -> Vector2.t -> Vector2.t -> float
