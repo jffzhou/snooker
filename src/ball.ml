@@ -18,6 +18,7 @@ type t = {
   radius : float;
   friction_c : float;
   color : color;
+  colliding : bool;
 }
 
 let color b = b.color
@@ -26,21 +27,23 @@ let vel b = b.vel
 let radius b = b.radius
 let touching b1 b2 = distance (pos b1) (pos b2) < radius b1 +. radius b2
 let moving b = b.vel <=> zero ()
-let set_accel b accel = { b with accel }
-let set_pos b pos = { b with pos }
-let set_vel b vel = { b with vel }
+let set_accel accel b = { b with accel }
+let set_pos pos b = { b with pos }
+let set_vel vel b = { b with vel }
+let set_colliding colliding b = { b with colliding }
 
 let tick dt b =
   let f = b.accel in
   let new_v =
-    b.vel <+> (f <*> dt) <*> b.friction_c ** dt
-    |> vec_map (fun x -> if Float.abs x < 0.05 then 0. else x)
+    b.vel <+> (f <*> dt) <*> b.friction_c ** dt |> fun x ->
+    if length x < 1. && not b.colliding then zero () else x
   in
   {
     b with
     vel = new_v;
     pos = b.pos <+> (new_v <*> dt);
     accel = zero ();
+    colliding = false;
   }
 
 let init (x, y) r f c =
@@ -51,14 +54,18 @@ let init (x, y) r f c =
     radius = r;
     friction_c = f;
     color = c;
+    colliding = false;
   }
 
 let resolve_collision_elastic b1 b2 =
   let x1, x2, v1, v2 = (b1.pos, b2.pos, b1.vel, b2.vel) in
   let one_collision v1 v2 x1 x2 =
-    v1 <-> (x1 <-> x2)
-    <*> dot_product (v1 <-> v2) (x1 <-> x2) /. length_sqr (x1 <-> x2)
+    v1
+    <-> (x1 <-> x2
+        <*> dot_product (v1 <-> v2) (x1 <-> x2) /. length_sqr (x1 <-> x2)
+        )
   in
-  let v1_n = one_collision x1 x2 v1 v2 in
+  let v1_n = one_collision v1 v2 x1 x2 in
   let v2_n = one_collision v2 v1 x2 x1 in
-  ({ b1 with vel = v1_n }, { b2 with vel = v2_n })
+  ( { b1 with vel = v1_n; colliding = true },
+    { b2 with vel = v2_n; colliding = true } )

@@ -29,7 +29,8 @@ val init : float * float -> float -> float -> color -> t
 (** [init (x, y) r f c] initialises a new ball with position [p], radius
     [r], friction [f] and color string [c].*)
 
-val set_accel : t -> Raylib.Vector2.t -> t
-val set_pos : t -> Raylib.Vector2.t -> t
-val set_vel : t -> Raylib.Vector2.t -> t
+val set_accel : Raylib.Vector2.t -> t -> t
+val set_pos : Raylib.Vector2.t -> t -> t
+val set_vel : Raylib.Vector2.t -> t -> t
 val resolve_collision_elastic : t -> t -> t * t
+val set_colliding : bool -> t -> t

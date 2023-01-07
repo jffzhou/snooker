@@ -43,6 +43,6 @@ let update_vel l b =
   match l with
   | { line_type; p1; p2 } -> (
       match line_type with
-      | Vertical -> set_vel b (reflect_y v)
-      | Horizontal -> set_vel b (reflect_x v)
+      | Vertical -> b |> set_vel (reflect_y v) |> set_colliding true
+      | Horizontal -> b |> set_vel (reflect_x v) |> set_colliding true
       | General -> b (*TODO*))
