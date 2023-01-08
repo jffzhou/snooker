@@ -53,7 +53,15 @@ let init_line_boundaries =
       create 200. 600.,
       create 600. 600. )
   in
-  LineBoundary.[ init tl tr; init tl bl; init tr br; init bl br ]
+  LineBoundary.
+    [
+      init tl tr;
+      init tl bl;
+      init tr br;
+      init bl br;
+      init (create 300. 500.) (create 500. 500.);
+      init (create 300. 500.) (create 300. 300.);
+    ]
 
 let init =
   {
@@ -80,9 +88,11 @@ let hit_cueball b c dt =
 let rec apply_boundary_ball b bl =
   match bl with
   | [] -> b
-  | h :: t ->
-      if collision h b then update_collision h b
-      else apply_boundary_ball b t
+  | h :: t -> begin
+      match resolve_boundary_collision h b with
+      | Some b -> b
+      | None -> apply_boundary_ball b t
+    end
 
 let apply_boundary bl =
   let rec apply_boundary_rec acc = function

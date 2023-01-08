@@ -51,8 +51,8 @@ let debug t = ()
 let draw t =
   begin_drawing ();
   clear_background Color.darkgreen;
+  t |> line_boundaries |> draw_lines t;
   t |> balls |> draw_balls;
   t |> cue |> draw_cue;
-  t |> line_boundaries |> draw_lines t;
   t |> debug;
   end_drawing ()

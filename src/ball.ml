@@ -37,7 +37,7 @@ let tick dt b =
   let new_v =
     (b.vel <+> (f <*> dt)
     <*> if b.colliding then 1. else b.friction_c ** dt)
-    |> fun x -> if length x < 1. && not b.colliding then zero () else x
+    |> fun x -> if length x < 0.5 && not b.colliding then zero () else x
   in
   {
     b with

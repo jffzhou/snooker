@@ -79,7 +79,7 @@ let released c =
     c with
     released = true;
     vel = (c.dist +. 5.) /. 3.;
-    power = c.dist /. 5.;
+    power = c.dist /. 4.;
   }
 
 (** cue is following mouse*)
