@@ -26,7 +26,7 @@ let pos b = b.pos
 let vel b = b.vel
 let radius b = b.radius
 let touching b1 b2 = distance (pos b1) (pos b2) < radius b1 +. radius b2
-let moving b = b.vel <=> zero ()
+let moving b = not (b.vel <=> zero ())
 let set_accel accel b = { b with accel }
 let set_pos pos b = { b with pos }
 let set_vel vel b = { b with vel }
