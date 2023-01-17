@@ -21,14 +21,14 @@ let vel c = c.vel
 let contact c = c.contact
 let power c = c.power
 
-let init (x, y) =
+let init (x, y) length =
   {
     dist = 0.;
     angle = 0.;
     vel = 0.;
     released = false;
     clicked = false;
-    length = 300.;
+    length;
     power = 0.;
     target = Vector2.create x y;
     clicked_pos = Vector2.zero ();
@@ -44,23 +44,18 @@ let vec_angle v1 v2 =
   atan2 y x
 
 (** helper for dragging cue controls*)
-let held_distance c mouse_pos =
+let held_distance c clicked_pos mouse_pos =
   Vector2.(
     let a = vec_angle mouse_pos c.target -. c.angle in
     let d =
       (Float.cos a *. distance mouse_pos c.target)
-      -. distance c.clicked_pos c.target
+      -. distance clicked_pos c.target
     in
     if d < 0. then 0. else if d > 200. then 200. else d)
 
 (** cue is being dragged back*)
-let dragging_back c mouse_pos =
-  {
-    c with
-    clicked_pos = (if c.clicked then c.clicked_pos else mouse_pos);
-    clicked = true;
-    dist = held_distance c mouse_pos;
-  }
+let dragging_back c clicked_pos mouse_pos =
+  { c with dist = held_distance c clicked_pos mouse_pos }
 
 (** cue has struck cue ball*)
 let contacted c =
@@ -93,11 +88,18 @@ let moving c mouse_pos target =
     target;
   }
 
-let tick c mouse_pos mouse_down no_movement target =
-  if mouse_down then dragging_back c mouse_pos
-  else if c.clicked then
+let tick c mouse_action target =
+  if c.released then
     if c.dist < 0. then contacted c
-    else if c.released then { c with dist = c.dist -. c.vel }
-    else released c
-  else if no_movement then moving c mouse_pos target
-  else { c with contact = false }
+    else { c with dist = c.dist -. c.vel }
+  else
+    match target with
+    | None -> { c with contact = false }
+    | Some t -> (
+        let open Control in
+        match mouse_action with
+        | None v | Click v | Released (None v) | Released (Click v) ->
+            moving c v t
+        | Dragging (v1, v2) -> dragging_back c v1 v2
+        | Released (Dragging (v1, v2)) -> released c
+        | _ -> failwith "impossible")

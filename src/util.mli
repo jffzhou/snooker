@@ -20,3 +20,4 @@ val reflect_y : Vector2.t -> Vector2.t
 
 val x_hat : unit -> Vector2.t
 val y_hat : unit -> Vector2.t
+val create_pair : float * float -> Vector2.t

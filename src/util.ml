@@ -26,3 +26,4 @@ let reflect_y v =
 
 let x_hat () = create 1. 0.
 let y_hat () = create 0. 1.
+let create_pair (x, y) = create x y

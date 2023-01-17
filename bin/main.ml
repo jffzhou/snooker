@@ -24,6 +24,9 @@ let () =
   Random.self_init ();
   let open Raylib.Rectangle in
   let open Raylib.Texture in
-  init_window 800 800 "snooker";
+  init_window
+    (setup_info.win_width |> int_of_float)
+    (setup_info.win_height |> int_of_float)
+    "snooker";
   set_target_fps 60;
   game_loop init
