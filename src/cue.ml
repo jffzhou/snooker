@@ -4,12 +4,10 @@ type t = {
   dist : float;
   angle : float;
   vel : float;
-  clicked : bool;
   released : bool;
   power : float;
   length : float;
   target : Vector2.t;
-  clicked_pos : Vector2.t;
   contact : bool;
 }
 
@@ -27,11 +25,9 @@ let init (x, y) length =
     angle = 0.;
     vel = 0.;
     released = false;
-    clicked = false;
     length;
     power = 0.;
     target = Vector2.create x y;
-    clicked_pos = Vector2.zero ();
     contact = false;
   }
 
@@ -59,14 +55,7 @@ let dragging_back c clicked_pos mouse_pos =
 
 (** cue has struck cue ball*)
 let contacted c =
-  {
-    c with
-    released = false;
-    clicked = false;
-    vel = 0.;
-    dist = 0.;
-    contact = true;
-  }
+  { c with released = false; vel = 0.; dist = 0.; contact = true }
 
 (** cue has just been released*)
 let released c =
@@ -74,7 +63,7 @@ let released c =
     c with
     released = true;
     vel = (c.dist +. 5.) /. 3.;
-    power = c.dist /. 4.;
+    power = c.dist /. 3.;
   }
 
 (** cue is following mouse*)
@@ -82,7 +71,6 @@ let moving c mouse_pos target =
   {
     c with
     angle = vec_angle mouse_pos c.target;
-    clicked = false;
     power = 0.;
     contact = false;
     target;

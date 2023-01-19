@@ -46,11 +46,23 @@ let rec draw_lines (t : Snooker.t) = function
       draw_line_v p1 p2 Color.black;
       draw_lines t tail
 
+let draw_pocket p =
+  Pocket.(
+    let x, y = p |> pos |> fun v -> (x v, y v) in
+    draw_circle (int_of_float x) (int_of_float y) (radius p) Color.black)
+
+let rec draw_pockets = function
+  | [] -> ()
+  | h :: t ->
+      draw_pocket h;
+      draw_pockets t
+
 let debug t = ()
 
 let draw t =
   begin_drawing ();
   clear_background Color.darkgreen;
+  t |> pockets |> draw_pockets;
   t |> balls |> draw_balls;
   t |> line_boundaries |> draw_lines t;
   if cueball t <> None then t |> cue |> draw_cue;

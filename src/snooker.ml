@@ -1,10 +1,11 @@
-open Ball
 open Raylib.Vector2
 open Cue
 open Raylib
 open LineBoundary
 open Util
 open Control
+open Pocket
+open Ball
 
 type state =
   | Control
@@ -17,6 +18,7 @@ type t = {
   state : state;
   selected : Ball.t option;
   control : Control.t;
+  pockets : Pocket.t list;
 }
 
 let substeps = 4
@@ -27,8 +29,8 @@ type setup_info = {
   win_height : float;
   table_width : float;
   table_height : float;
-  goal_width : float;
-  goal_height : float;
+  pocket_width : float;
+  pocket_height : float;
 }
 
 let setup_info =
@@ -37,13 +39,14 @@ let setup_info =
     win_height = 80. *. scale;
     table_width = 84. *. scale;
     table_height = 42. *. scale;
-    goal_width = 4.5 *. scale;
-    goal_height = 4.5 *. scale;
+    pocket_width = 4.5 *. scale;
+    pocket_height = 4.5 *. scale;
   }
 
 let ball_radius = 1.125 *. scale
 let cueball t = t.selected
 let cueball_pos t = cueball t |> Option.get |> pos
+let pockets t = t.pockets
 
 let random_color () =
   match Random.int 7 with
@@ -61,7 +64,7 @@ let new_ball () =
     (Random.float 300. +. 250., Random.float 300. +. 250.)
     ball_radius 0.96 Cue
 
-let init_balls =
+let init_balls () =
   let rec random_ball b_list n =
     if n = 0 then b_list
     else
@@ -78,7 +81,7 @@ let init_balls =
       Ball.init (400., 400.) ball_radius 0.96 Cue;
       Ball.init (800., 400.) ball_radius 0.96 Cue;
     ]
-    20
+    50
 
 let create_boundary_points () =
   match setup_info with
@@ -87,31 +90,31 @@ let create_boundary_points () =
    win_height = wh;
    table_width = tw;
    table_height = th;
-   goal_width = gw;
-   goal_height = gh;
+   pocket_width = pw;
+   pocket_height = ph;
   } ->
       let start = create ((ww -. tw) /. 2.) ((wh -. th) /. 2.) in
       let deltas =
         [
           (tw, 0.);
-          (0., (th -. gh) /. 2.);
-          (gw, 0.);
-          (0., gh);
-          (~-.gw, 0.);
-          (0., (th -. gh) /. 2.);
+          (0., (th -. ph) /. 2.);
+          (pw, 0.);
+          (0., ph);
+          (~-.pw, 0.);
+          (0., (th -. ph) /. 2.);
           (~-.tw, 0.);
-          (0., ~-.(th -. gh) /. 2.);
-          (~-.gw, 0.);
-          (0., ~-.gh);
-          (gw, 0.);
-          (0., ~-.(th -. gh) /. 2.);
+          (0., ~-.(th -. ph) /. 2.);
+          (~-.pw, 0.);
+          (0., ~-.ph);
+          (pw, 0.);
+          (0., ~-.(th -. ph) /. 2.);
         ]
       in
       List.fold_left
         (fun x y -> (List.hd x <+> create_pair y) :: x)
         [ start ] deltas
 
-let init_line_boundaries =
+let init_line_boundaries () =
   let points = create_boundary_points () in
   let rec generate_boundaries = function
     | [] -> []
@@ -121,14 +124,32 @@ let init_line_boundaries =
   in
   generate_boundaries points
 
+let init_pockets () =
+  match setup_info with
+  | {
+   win_width = ww;
+   win_height = wh;
+   table_width = tw;
+   table_height = th;
+   pocket_width = pw;
+   pocket_height = ph;
+  } ->
+      let r = min pw ph *. 0.4 in
+      Pocket.
+        [
+          init (create ((ww -. tw -. pw) /. 2.) (wh /. 2.)) r 50.;
+          init (create ((ww +. tw +. pw) /. 2.) (wh /. 2.)) r 50.;
+        ]
+
 let init =
   {
-    balls = init_balls;
+    balls = init_balls ();
     cue = Cue.init (400., 400.) (36. *. scale);
-    line_boundaries = init_line_boundaries;
+    line_boundaries = init_line_boundaries ();
     state = Control;
     selected = None;
     control = Control.init ();
+    pockets = init_pockets ();
   }
 
 let balls t =
@@ -166,6 +187,10 @@ let apply_boundary bl =
   in
   apply_boundary_rec []
 
+let check_pockets p_lst b_lst =
+  let one_ball_check ball = List.filter (falls ball) p_lst in
+  List.filter (fun x -> one_ball_check x = []) b_lst
+
 let all_ball_collisions lst =
   let fold_helper x y =
     if touching (fst x) y then
@@ -181,10 +206,11 @@ let all_ball_collisions lst =
   in
   get_collisions [] lst
 
-let update_balls balls line_boundaries =
+let update_balls balls line_boundaries pockets =
   let i, rb = (ref substeps, ref balls) in
   while !i > 0 do
     rb := List.map (Ball.tick (1. /. float_of_int substeps)) !rb;
+    rb := check_pockets pockets !rb;
     rb := apply_boundary line_boundaries !rb;
     rb := all_ball_collisions !rb;
     i := !i - 1
@@ -194,7 +220,8 @@ let update_balls balls line_boundaries =
 let rec filter_selected mouse_pos selected prev = function
   | [] -> (selected, prev)
   | h :: t ->
-      if distance mouse_pos (pos h) < radius h && color h = Cue then
+      if distance mouse_pos (pos h) < Ball.radius h && color h = Cue
+      then
         ( Some h,
           if selected = None then prev @ t
           else (Option.get selected :: prev) @ t )
@@ -228,13 +255,6 @@ let update_state t =
   | Control -> Control
   | Moving -> if List.exists moving (balls t) then Moving else Control
 
-let rec string_velocities acc = function
-  | [] -> acc
-  | h :: t ->
-      let v = Ball.vel h in
-      let str = Printf.sprintf "(%f, %f); " (x v) (y v) in
-      string_velocities (str ^ acc) t
-
 let tick t =
   let control =
     if t.state = Control then Control.tick t.control
@@ -246,7 +266,10 @@ let tick t =
   let t = check_contact { t with cue } in
   let t =
     if t.state = Moving then
-      { t with balls = update_balls t.balls t.line_boundaries }
+      {
+        t with
+        balls = update_balls t.balls t.line_boundaries t.pockets;
+      }
     else t
   in
   { t with control; state = update_state t }
