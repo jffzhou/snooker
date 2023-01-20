@@ -19,6 +19,7 @@ type t = {
   friction_c : float;
   color : color;
   colliding : bool;
+  sunk : bool;
 }
 
 let color b = b.color
@@ -30,6 +31,8 @@ let moving b = not (b.vel <=> zero ())
 let set_accel accel b = { b with accel }
 let set_pos pos b = { b with pos }
 let set_vel vel b = { b with vel }
+let sink b = { b with sunk = true }
+let is_sunk b = b.sunk
 
 let is_cue b player =
   match b.color with
@@ -62,6 +65,7 @@ let init (x, y) r f c =
     friction_c = f;
     color = c;
     colliding = false;
+    sunk = false;
   }
 
 let resolve_collision_elastic b1 b2 =

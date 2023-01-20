@@ -5,8 +5,8 @@ exception UndefinedBall
 exception UndefinedLine
 
 let data = Yojson.Basic.from_file "data/init.json"
-let ball_radius = 15.
-let scale = 10.
+let scale = data |> member "scale" |> to_number
+let ball_radius = (data |> member "ball_radius" |> to_number) *. scale
 
 let ball_of_json json =
   let x, y =

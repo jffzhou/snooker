@@ -28,3 +28,9 @@ let x_hat () = create 1. 0.
 let y_hat () = create 0. 1.
 let create_pair (x, y) = create x y
 let string_of_vec v = Printf.sprintf "(%f, %f)" (x v) (y v)
+
+let is_obtuse s1 s2 s3 =
+  let m = List.fold_left max min_float [ s1; s2; s3 ] in
+  if m = s1 then s1 ** 2. > (s2 ** 2.) +. (s3 ** 2.)
+  else if m = s2 then s2 ** 2. > (s1 ** 2.) +. (s3 ** 2.)
+  else s3 ** 2. > (s2 ** 2.) +. (s1 ** 2.)

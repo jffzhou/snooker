@@ -19,6 +19,8 @@ val radius : t -> float
 val color : t -> color
 val moving : t -> bool
 val vel : t -> Raylib.Vector2.t
+val sink : t -> t
+val is_sunk : t -> bool
 
 val touching : t -> t -> bool
 (** [touching b1 b2] is [true] if [b1] and [b2] are touching and [false]

@@ -80,7 +80,7 @@ let apply_boundary bl =
 
 let check_pockets p_lst b_lst =
   let one_ball_check ball = List.filter (is_goal ball) p_lst in
-  List.filter (fun x -> one_ball_check x = []) b_lst
+  List.map (fun x -> if one_ball_check x = [] then x else sink x) b_lst
 
 let all_ball_collisions lst =
   let fold_helper x y =
