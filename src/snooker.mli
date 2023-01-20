@@ -1,16 +1,5 @@
 type t
 
-type setup_info = {
-  win_width : float;
-  win_height : float;
-  table_width : float;
-  table_height : float;
-  pocket_width : float;
-  pocket_height : float;
-}
-
-val setup_info : setup_info
-val ball_radius : float
 val cueball : t -> Ball.t option
 val init : t
 val tick : t -> t

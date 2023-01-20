@@ -2,6 +2,7 @@ open Game
 open Snooker
 open Graphics
 open Raylib
+open Init
 
 let debug = false
 
@@ -24,9 +25,7 @@ let () =
   Random.self_init ();
   let open Raylib.Rectangle in
   let open Raylib.Texture in
-  init_window
-    (setup_info.win_width |> int_of_float)
-    (setup_info.win_height |> int_of_float)
-    "snooker";
+  let width, height = window_dimensions in
+  init_window width height "snooker";
   set_target_fps 60;
   game_loop init

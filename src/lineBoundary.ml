@@ -45,7 +45,7 @@ let check_corner_collision b p v r p1 p2 =
   if dist < r then Some (resolve_corner_collision b p v p1 (r -. dist))
   else
     let dist = distance p2 p in
-    if distance p2 p < r then
+    if dist < r then
       Some (resolve_corner_collision b p v p2 (r -. dist))
     else None
 

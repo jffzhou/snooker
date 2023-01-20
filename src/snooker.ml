@@ -8,8 +8,8 @@ open Pocket
 open Ball
 
 type state =
-  | Control
-  | Moving
+  | Control of int
+  | Moving of int
 
 type t = {
   balls : Ball.t list;
@@ -19,146 +19,37 @@ type t = {
   selected : Ball.t option;
   control : Control.t;
   pockets : Pocket.t list;
+  score : int * int;
 }
 
 let substeps = 4
-let scale = 10.
-
-type setup_info = {
-  win_width : float;
-  win_height : float;
-  table_width : float;
-  table_height : float;
-  pocket_width : float;
-  pocket_height : float;
-}
-
-let setup_info =
-  {
-    win_width = 120. *. scale;
-    win_height = 80. *. scale;
-    table_width = 84. *. scale;
-    table_height = 42. *. scale;
-    pocket_width = 4.5 *. scale;
-    pocket_height = 4.5 *. scale;
-  }
-
-let ball_radius = 1.125 *. scale
 let cueball t = t.selected
 let cueball_pos t = cueball t |> Option.get |> pos
 let pockets t = t.pockets
+let score t = t.score
+let cue t = t.cue
+let line_boundaries t = t.line_boundaries
 
-let random_color () =
-  match Random.int 7 with
-  | 0 -> Ball.Red
-  | 1 -> Ball.Yellow
-  | 2 -> Ball.Green
-  | 3 -> Ball.Brown
-  | 4 -> Ball.Blue
-  | 5 -> Ball.Pink
-  | 6 -> Ball.Black
-  | _ -> failwith "impossible"
-
-let new_ball () =
-  Ball.init
-    (Random.float 300. +. 250., Random.float 300. +. 250.)
-    ball_radius 0.96 Cue
-
-let init_balls () =
-  let rec random_ball b_list n =
-    if n = 0 then b_list
-    else
-      let new_b = ref (new_ball ()) in
-      while
-        List.fold_left (fun x y -> x || touching y !new_b) false b_list
-      do
-        new_b := new_ball ()
-      done;
-      random_ball (!new_b :: b_list) (n - 1)
-  in
-  random_ball
-    [
-      Ball.init (400., 400.) ball_radius 0.96 Cue;
-      Ball.init (800., 400.) ball_radius 0.96 Cue;
-    ]
-    50
-
-let create_boundary_points () =
-  match setup_info with
-  | {
-   win_width = ww;
-   win_height = wh;
-   table_width = tw;
-   table_height = th;
-   pocket_width = pw;
-   pocket_height = ph;
-  } ->
-      let start = create ((ww -. tw) /. 2.) ((wh -. th) /. 2.) in
-      let deltas =
-        [
-          (tw, 0.);
-          (0., (th -. ph) /. 2.);
-          (pw, 0.);
-          (0., ph);
-          (~-.pw, 0.);
-          (0., (th -. ph) /. 2.);
-          (~-.tw, 0.);
-          (0., ~-.(th -. ph) /. 2.);
-          (~-.pw, 0.);
-          (0., ~-.ph);
-          (pw, 0.);
-          (0., ~-.(th -. ph) /. 2.);
-        ]
-      in
-      List.fold_left
-        (fun x y -> (List.hd x <+> create_pair y) :: x)
-        [ start ] deltas
-
-let init_line_boundaries () =
-  let points = create_boundary_points () in
-  let rec generate_boundaries = function
-    | [] -> []
-    | [ p ] -> [ LineBoundary.init p (List.hd points) ]
-    | v1 :: v2 :: t ->
-        LineBoundary.init v1 v2 :: generate_boundaries (v2 :: t)
-  in
-  generate_boundaries points
-
-let init_pockets () =
-  match setup_info with
-  | {
-   win_width = ww;
-   win_height = wh;
-   table_width = tw;
-   table_height = th;
-   pocket_width = pw;
-   pocket_height = ph;
-  } ->
-      let r = min pw ph *. 0.4 in
-      Pocket.
-        [
-          init (create ((ww -. tw -. pw) /. 2.) (wh /. 2.)) r 50.;
-          init (create ((ww +. tw +. pw) /. 2.) (wh /. 2.)) r 50.;
-        ]
+let current_player t =
+  match t.state with
+  | Control i | Moving i -> i
 
 let init =
   {
-    balls = init_balls ();
-    cue = Cue.init (400., 400.) (36. *. scale);
-    line_boundaries = init_line_boundaries ();
-    state = Control;
+    balls = Init.init_balls;
+    cue = Cue.init (400., 400.) (36. *. Init.scale);
+    line_boundaries = Init.init_line_boundaries;
+    state = Control 1;
     selected = None;
     control = Control.init ();
-    pockets = init_pockets ();
+    pockets = Init.init_pockets;
+    score = (0, 0);
   }
 
 let balls t =
   match t.selected with
   | None -> t.balls
   | Some c -> c :: t.balls
-
-let cue t = t.cue
-let line_boundaries t = t.line_boundaries
 
 let hit_cueball b c dt =
   let a = Float.pi +. angle c in
@@ -188,7 +79,7 @@ let apply_boundary bl =
   apply_boundary_rec []
 
 let check_pockets p_lst b_lst =
-  let one_ball_check ball = List.filter (falls ball) p_lst in
+  let one_ball_check ball = List.filter (is_goal ball) p_lst in
   List.filter (fun x -> one_ball_check x = []) b_lst
 
 let all_ball_collisions lst =
@@ -217,19 +108,21 @@ let update_balls balls line_boundaries pockets =
   done;
   !rb
 
-let rec filter_selected mouse_pos selected prev = function
+let rec filter_selected mouse_pos selected prev player = function
   | [] -> (selected, prev)
   | h :: t ->
-      if distance mouse_pos (pos h) < Ball.radius h && color h = Cue
+      if distance mouse_pos (pos h) < Ball.radius h && is_cue h player
       then
         ( Some h,
           if selected = None then prev @ t
           else (Option.get selected :: prev) @ t )
-      else filter_selected mouse_pos selected (h :: prev) t
+      else filter_selected mouse_pos selected (h :: prev) player t
 
 let check_click t = function
   | Released (Click v) ->
-      let selected, balls = filter_selected v t.selected [] t.balls in
+      let selected, balls =
+        filter_selected v t.selected [] (current_player t) t.balls
+      in
       if selected = None then t else { t with selected; balls }
   | _ -> t
 
@@ -240,7 +133,10 @@ let check_contact t =
       balls =
         hit_cueball t.selected t.cue (1. /. float_of_int substeps)
         :: t.balls;
-      state = Moving;
+      state =
+        (match t.state with
+        | Control i -> Moving i
+        | _ -> failwith "checking contact while moving");
       selected = None;
     }
   else t
@@ -252,24 +148,28 @@ let cue_tick t mouse_action =
 
 let update_state t =
   match t.state with
-  | Control -> Control
-  | Moving -> if List.exists moving (balls t) then Moving else Control
+  | Control i -> Control i
+  | Moving i ->
+      if List.exists moving (balls t) then Moving i
+      else Control (if i = 2 then 1 else 2)
 
 let tick t =
   let control =
-    if t.state = Control then Control.tick t.control
-    else Control.init ()
+    match t.state with
+    | Control _ -> Control.tick t.control
+    | _ -> Control.init ()
   in
   let mouse_action = Control.action control in
   let t = check_click t mouse_action in
   let cue = cue_tick t mouse_action in
   let t = check_contact { t with cue } in
   let t =
-    if t.state = Moving then
-      {
-        t with
-        balls = update_balls t.balls t.line_boundaries t.pockets;
-      }
-    else t
+    match t.state with
+    | Moving _ ->
+        {
+          t with
+          balls = update_balls t.balls t.line_boundaries t.pockets;
+        }
+    | _ -> t
   in
   { t with control; state = update_state t }

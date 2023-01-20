@@ -1,17 +1,7 @@
 open Raylib
 
-type t = {
-  pos : Vector2.t;
-  radius : float;
-  max_speed : float;
-}
+type t = LineBoundary.t
 
-let init pos radius max_speed = { pos; radius; max_speed }
-let pos p = p.pos
-let radius p = p.radius
-
-let falls b p =
-  let open Ball in
-  let open Vector2 in
-  let ball_p, ball_s = (pos b, vel b |> length) in
-  ball_s < p.max_speed && distance ball_p p.pos < p.radius
+let init = LineBoundary.init
+let points = LineBoundary.points
+let is_goal b p = LineBoundary.resolve_boundary_collision p b <> None

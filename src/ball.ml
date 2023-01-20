@@ -9,7 +9,7 @@ type color =
   | Blue
   | Pink
   | Black
-  | Cue
+  | Cue of int
 
 type t = {
   pos : Raylib.Vector2.t;
@@ -30,6 +30,12 @@ let moving b = not (b.vel <=> zero ())
 let set_accel accel b = { b with accel }
 let set_pos pos b = { b with pos }
 let set_vel vel b = { b with vel }
+
+let is_cue b player =
+  match b.color with
+  | Cue p -> if p = 0 then true else p = player
+  | _ -> false
+
 let set_colliding colliding b = { b with colliding }
 
 let tick dt b =

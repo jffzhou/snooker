@@ -11,9 +11,10 @@ type color =
   | Blue
   | Pink
   | Black
-  | Cue
+  | Cue of int
 
 val pos : t -> Raylib.Vector2.t
+val is_cue : t -> int -> bool
 val radius : t -> float
 val color : t -> color
 val moving : t -> bool
