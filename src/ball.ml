@@ -19,24 +19,39 @@ type t = {
   friction_c : float;
   color : color;
   colliding : bool;
+  sunk_time : float;
+  init_pos : Raylib.Vector2.t;
   sunk : bool;
 }
 
 let color b = b.color
 let pos b = b.pos
 let vel b = b.vel
+
+let reset t =
+  {
+    t with
+    pos = t.init_pos;
+    vel = zero ();
+    accel = zero ();
+    sunk = false;
+    sunk_time = 0.;
+    colliding = false;
+  }
+
 let radius b = b.radius
 let touching b1 b2 = distance (pos b1) (pos b2) < radius b1 +. radius b2
 let moving b = not (b.vel <=> zero ())
 let set_accel accel b = { b with accel }
 let set_pos pos b = { b with pos }
 let set_vel vel b = { b with vel }
+let sunk_time b = b.sunk_time
 let sink b = { b with sunk = true }
 let is_sunk b = b.sunk
 
 let is_cue b player =
   match b.color with
-  | Cue p -> if p = 0 then true else p = player
+  | Cue p -> if player = 0 then true else p = player
   | _ -> false
 
 let set_colliding colliding b = { b with colliding }
@@ -54,6 +69,7 @@ let tick dt b =
     pos = b.pos <+> (new_v <*> dt);
     accel = zero ();
     colliding = false;
+    sunk_time = (if b.sunk then b.sunk_time +. dt else 0.);
   }
 
 let init (x, y) r f c =
@@ -66,6 +82,8 @@ let init (x, y) r f c =
     color = c;
     colliding = false;
     sunk = false;
+    init_pos = create x y;
+    sunk_time = 0.;
   }
 
 let resolve_collision_elastic b1 b2 =

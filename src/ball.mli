@@ -21,6 +21,8 @@ val moving : t -> bool
 val vel : t -> Raylib.Vector2.t
 val sink : t -> t
 val is_sunk : t -> bool
+val reset : t -> t
+val sunk_time : t -> float
 
 val touching : t -> t -> bool
 (** [touching b1 b2] is [true] if [b1] and [b2] are touching and [false]

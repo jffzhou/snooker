@@ -59,12 +59,14 @@ let contacted c =
 
 (** cue has just been released*)
 let released c =
-  {
-    c with
-    released = true;
-    vel = (c.dist +. 5.) /. 3.;
-    power = c.dist /. 3.;
-  }
+  if c.dist = 0. then c
+  else
+    {
+      c with
+      released = true;
+      vel = (c.dist +. 5.) /. 3.;
+      power = c.dist /. 3.;
+    }
 
 (** cue is following mouse*)
 let moving c mouse_pos target =

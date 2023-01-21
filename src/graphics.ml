@@ -17,21 +17,24 @@ let color_to_raylib =
     | Black -> Color.black
     | Cue _ -> Color.white)
 
+let ball_alpha sunk_time =
+  255. -. (sunk_time *. 255. /. 10. |> min 255.) |> int_of_float
+
 let draw_ball b =
   let open Ball in
   let x, y = b |> pos |> fun v -> (x v, y v) in
-  let sunk = is_sunk b in
+  let sunk, sunk_time = (is_sunk b, sunk_time b) in
   match color b with
   | Cue i ->
       draw_circle (int_of_float x) (int_of_float y) (radius b)
-        (if i = 1 then Color.red else Color.blue);
+        (if i = 1 then Color.create 221 57 163 (ball_alpha sunk_time)
+        else Color.create 40 199 191 (ball_alpha sunk_time));
       draw_circle (int_of_float x) (int_of_float y)
-        (0.85 *. radius b)
-        (if sunk then Color.create 255 255 255 100 else Color.white)
+        (0.75 *. radius b)
+        (Color.create 255 255 255 (ball_alpha sunk_time))
   | c ->
       draw_circle (int_of_float x) (int_of_float y) (radius b)
-        (if sunk then Color.create 255 255 255 40
-        else c |> color_to_raylib)
+        (Color.create 253 214 21 (ball_alpha sunk_time))
 
 let draw_cue c =
   let rect =
@@ -81,12 +84,28 @@ let draw_indicator t =
   let end_pos = find_end_pos start_pos t (t |> line_boundaries) in
   draw_line_ex start_pos end_pos 2. Color.gray
 
+let draw_score t =
+  let p1, p2 = t |> score |> vec_pair in
+  draw_text
+    (p1 |> int_of_float |> string_of_int)
+    (scale *. 19. |> int_of_float)
+    (scale *. 19.5 |> int_of_float)
+    (scale *. 4. |> int_of_float)
+    Color.white;
+  draw_text
+    (p2 |> int_of_float |> string_of_int)
+    (scale *. 99. |> int_of_float)
+    (scale *. 19.5 |> int_of_float)
+    (scale *. 4. |> int_of_float)
+    Color.white
+
 let draw t =
   begin_drawing ();
   clear_background Color.black;
+  t |> draw_score;
   if cueball t <> None then draw_indicator t;
   t |> balls |> draw_list draw_ball;
   t |> line_boundaries |> draw_list draw_line;
   if cueball t <> None then t |> cue |> draw_cue;
-  t |> debug;
+  (* t |> debug; *)
   end_drawing ()
